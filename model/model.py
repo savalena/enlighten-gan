@@ -8,7 +8,6 @@ class Model(nn.Module):
                  global_discriminator,
                  local_discriminator,
                  criterion,
-                 attention_map,
                  vgg,
                  vgg_loss,
                  lr=0.0001, beta=0.5):
@@ -24,12 +23,11 @@ class Model(nn.Module):
         self.optimizerD_local = torch.optim.Adam(self._netD_local.parameters(), lr=lr, betas=(beta, 0.999))
 
         self._criterion = criterion
-        self._attention_map = attention_map
 
         self.lr = lr
 
-    def forward(self, input):
-        attention_map = self._attention_map(input)
+    def forward(self, input, attention_map):
+        # attention_map = self._attention_map(input)
         output = self._netG.forward(input, attention_map)
         return output
 

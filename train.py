@@ -10,35 +10,50 @@ from model.loses.gan_loss import GanLoss
 from model.vgg import Vgg16
 from model.loses.vgg_loss import VGGLoss
 from utils import patches
-from data_loader import ABDatasetLoader
+# from utils import weights
+from data_loader import ABDataset, DatasetLoader
 
 if __name__ == '__main__':
+    device = torch.device("cuda")
     netG = GeneratorEnlightenGAN()
+    netG.to(device)
+    netG = torch.nn.DataParallel(netG, device_ids=[0])
+
     netD_global = GlobalDiscriminatorEnlightenGAN()
+    netD_global.to(device)
+    netD_global = torch.nn.DataParallel(netD_global, device_ids=[0])
+
     netD_local = LocalDiscriminatorEnlightenGAN()
+    netD_local.to(device)
+    netD_local = torch.nn.DataParallel(netD_local, device_ids=[0])
+
     attention_map = AttentionMapGray()
     criterion = GanLoss()
     vgg_loss = VGGLoss()
 
     netVgg = Vgg16()
-    netVgg.device("cuda")
-    model_dir = '../../saved_models'
+    netVgg.to(device)
+    model_dir = './saved_models'
     netVgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')))
     netVgg = torch.nn.DataParallel(netVgg, device_ids=[0])
 
-    model = Model(netG, netD_global, netD_local, criterion, attention_map, netVgg, vgg_loss)
+    model = Model(netG, netD_global, netD_local, criterion, netVgg, vgg_loss)
 
     niter = 100
     niter_decay = 100
-    dataset_root = ''
+    dataset_root = '/home/student/Documents/alena/thesis/enlighte-gan-dataset'
 
-    dataset = ABDatasetLoader(dataset_root)
+    dataset = ABDataset(dataset_root, attention_map)
+    data_loader = DatasetLoader(dataset, batchsize=10)
+    dataset = data_loader.load_dataset()
+
     for epoch in range(niter + niter_decay + 1):
         for i, data in enumerate(dataset):
             img_dark = data['dark']
             img_normal = data['normal']
+            img_gray = data['gray']
 
-            img_generated = model.forward(img_dark)
+            img_generated = model.forward(img_dark, img_gray)
 
             patches_dark_img = patches.create_patch(img_dark)
             patches_normal_img = patches.create_patch(img_normal)

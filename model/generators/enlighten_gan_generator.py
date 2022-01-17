@@ -53,10 +53,10 @@ class GeneratorEnlightenGAN(nn.Module):
         self.conv_25 = double_conv_block(64, 32, 3)
         self.conv_26 = nn.Conv2d(32, 3, 3)
 
-        self.deconv_14 = nn.Conv2d(512, 256, 3)
-        self.deconv_13 = nn.Conv2d(256, 128, 3)
-        self.deconv_12 = nn.Conv2d(128, 64, 3)
-        self.deconv_11 = nn.Conv2d(64, 32, 3)
+        self.deconv_15 = nn.Conv2d(512, 256, 3)
+        self.deconv_14 = nn.Conv2d(256, 128, 3)
+        self.deconv_13 = nn.Conv2d(128, 64, 3)
+        self.deconv_12 = nn.Conv2d(64, 32, 3)
 
     def forward(self, input, attention_map):
         gray_2 = self.downsample_1(attention_map)
@@ -73,11 +73,18 @@ class GeneratorEnlightenGAN(nn.Module):
         conv14 = self.conv_14(x)
         x = self.downsample_4(conv14)
 
-        conv15 = self.conv15(x)
+        print('------')
+
+        print(x.size())
+        print(conv14.size())
+
+        conv15 = self.conv_15(x)
         x = gray_5 * conv15
         x = self.upsample_1(self.conv_21(x))
 
         up1 = conv14 * gray_4
+        # print(x.size())
+        # print(self.deconv_15(x).size())
         up1 = torch.cat((self.deconv_15(x), up1), 1)
         x = self.upsample_2(self.conv_22(up1))
 
