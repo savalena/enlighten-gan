@@ -34,12 +34,3 @@ class ABDataset(Dataset):
         return len(self.dark_imgs_filenames)
 
 
-class DatasetLoader:
-    def __init__(self, dataset, batchsize=10, nthreads=4):
-        self.dataloader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=batchsize,
-            num_workers=int(nthreads))
-
-    def load_dataset(self):
-        return self.dataloader

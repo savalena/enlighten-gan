@@ -11,8 +11,9 @@ class VGGLoss(nn.Module):
     def compute(self, vgg, img, target):
         img_vgg = self.vgg_preprocess(img)
         target_vgg = self.vgg_preprocess(target)
-        img_fea = vgg(img_vgg)
-        target_fea = vgg(target_vgg)
+
+        img_fea = vgg.forward(img_vgg)
+        target_fea = vgg.forward(target_vgg)
         return torch.mean((self.instancenorm(img_fea) - self.instancenorm(target_fea)) ** 2)
 
     @staticmethod

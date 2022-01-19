@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 def double_conv_block(in_channels, out_channels, size):
     block = nn.Sequential(
         nn.Conv2d(in_channels, out_channels, size, padding=1),
@@ -39,31 +40,33 @@ class GeneratorEnlightenGAN(nn.Module):
 
         self.conv_15 = conv_block(256, 512, 3)
         self.conv_21 = conv_block(512, 512, 3)
-        self.upsample_1 = nn.Upsample(scale_factor=2, mode=upsampling_mode)
+        self.upsample_1 = nn.Upsample(scale_factor=2, mode=upsampling_mode, align_corners=True)
 
         self.conv_22 = double_conv_block(512, 256, 3)
-        self.upsample_2 = nn.Upsample(scale_factor=2, mode=upsampling_mode)
+        self.upsample_2 = nn.Upsample(scale_factor=2, mode=upsampling_mode, align_corners=True)
 
         self.conv_23 = double_conv_block(256, 128, 3)
-        self.upsample_3 = nn.Upsample(scale_factor=2, mode=upsampling_mode)
+        self.upsample_3 = nn.Upsample(scale_factor=2, mode=upsampling_mode, align_corners=True)
 
         self.conv_24 = double_conv_block(128, 64, 3)
-        self.upsample_4 = nn.Upsample(scale_factor=2, mode=upsampling_mode)
+        self.upsample_4 = nn.Upsample(scale_factor=2, mode=upsampling_mode, align_corners=True)
 
-        self.conv_25 = double_conv_block(64, 32, 3)
-        self.conv_26 = nn.Conv2d(32, 3, 3)
+        self.conv_25 = conv_block(64, 32, 3)
+        self.conv_26 = nn.Conv2d(32, 32, 3, padding=1)
+        self.leaky_relu = nn.LeakyReLU(0.2, inplace=True)
+        self.conv_27 = nn.Conv2d(32, 3, 3, padding=1)
 
-        self.deconv_15 = nn.Conv2d(512, 256, 3)
-        self.deconv_14 = nn.Conv2d(256, 128, 3)
-        self.deconv_13 = nn.Conv2d(128, 64, 3)
-        self.deconv_12 = nn.Conv2d(64, 32, 3)
+        self.deconv_15 = nn.Conv2d(512, 256, 3, padding=1)
+        self.deconv_14 = nn.Conv2d(256, 128, 3, padding=1)
+        self.deconv_13 = nn.Conv2d(128, 64, 3, padding=1)
+        self.deconv_12 = nn.Conv2d(64, 32, 3, padding=1)
 
     def forward(self, input, attention_map):
         gray_2 = self.downsample_1(attention_map)
         gray_3 = self.downsample_2(gray_2)
         gray_4 = self.downsample_3(gray_3)
         gray_5 = self.downsample_4(gray_4)
-
+        # print(torch.cat((input, attention_map), 1).shape)
         conv11 = self.conv_11(torch.cat((input, attention_map), 1))
         x = self.downsample_1(conv11)
         conv12 = self.conv_12(x)
@@ -71,21 +74,14 @@ class GeneratorEnlightenGAN(nn.Module):
         conv13 = self.conv_13(x)
         x = self.downsample_3(conv13)
         conv14 = self.conv_14(x)
-        x = self.downsample_4(conv14)
+        x = self.downsample_4(conv14)  #
 
-        print('------')
-
-        print(x.size())
-        print(conv14.size())
-
-        conv15 = self.conv_15(x)
+        conv15 = self.conv_15(x)  # 20x20
         x = gray_5 * conv15
-        x = self.upsample_1(self.conv_21(x))
+        x = self.upsample_1(self.conv_21(x))  # 40x40
 
-        up1 = conv14 * gray_4
-        # print(x.size())
-        # print(self.deconv_15(x).size())
-        up1 = torch.cat((self.deconv_15(x), up1), 1)
+        up1 = conv14 * gray_4  # 40x40
+        up1 = torch.cat((self.deconv_15(x), up1), 1)  # deconv15 38x38
         x = self.upsample_2(self.conv_22(up1))
 
         up2 = conv13 * gray_3
@@ -94,14 +90,15 @@ class GeneratorEnlightenGAN(nn.Module):
 
         up3 = conv12 * gray_2
         up3 = torch.cat((self.deconv_13(x), up3), 1)
-        x = self.upsample_4(self.conv24(up3))
+        x = self.upsample_4(self.conv_24(up3))
 
         up4 = conv11 * attention_map
         up4 = torch.cat((self.deconv_12(x), up4), 1)
-        x = self.conv_25(up4)
-        x = self.conv_26(x)
+        x = self.conv_25(up4)  #
+        x = self.leaky_relu(self.conv_26(x))  # should be double conv block
+        x = self.conv_27(x)
 
-        # ???
         x = x * attention_map
         x = x + input
+        # x = torch.sigmoid(x)
         return x
