@@ -60,13 +60,14 @@ if __name__ == '__main__':
 
             img_generated = model.forward(img_dark, img_gray)
             with torch.no_grad():
-                patches_dark_img = patches.create_patch(img_dark, num_patches=num_patches)
-                patches_normal_img = patches.create_patch(img_normal,  num_patches=num_patches)
-                patches_generated_img = patches.create_patch(img_generated,  num_patches=num_patches)
-
+                patches_dark_img, patches_normal_img, patches_generated_img = patches.create_patch(img_dark,
+                                                                                                   img_normal,
+                                                                                                   img_generated,
+                                                                                                   num_patches=num_patches)
             model.optimizer_G.zero_grad()
-            loss_G = model.loss_G(img_dark, img_normal, img_generated, patches_dark_img,
-                                  patches_generated_img).backward()
+            loss_G, _, _, _ = model.loss_G(img_dark, img_normal, img_generated, patches_dark_img,
+                                           patches_generated_img)
+            loss_G.backward()
             model.optimizer_G.step()
 
             model.optimizerD_global.zero_grad()

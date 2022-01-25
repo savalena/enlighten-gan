@@ -32,6 +32,7 @@ class Model(nn.Module):
         return output
 
     def loss_G(self, img_dark, img_normal_light, img_generated, patches_dark_img, patches_generated_img):
+        loss_G = 0
         prediction_generated_img = self._netD_global.forward(img_generated)
         prediction_normal_img = self._netD_global.forward(img_normal_light)
 
@@ -39,9 +40,10 @@ class Model(nn.Module):
         # print(prediction_normal_img[0, 0, :10, :10])
 
         # global discriminator loss for generator
-        loss_G = self._criterion.compute(prediction_normal_img - torch.mean(prediction_generated_img), False) \
-                 + self._criterion.compute(prediction_generated_img - torch.mean(prediction_normal_img), True)
-        loss_G /= 2
+        loss_G_global = self._criterion.compute(prediction_normal_img - torch.mean(prediction_generated_img), False) \
+                        + self._criterion.compute(prediction_generated_img - torch.mean(prediction_normal_img), True)
+        loss_G_global /= 2
+        loss_G += loss_G_global
         # print(loss_G.item())
         # local discriminator loss for generator
         loss_G_local = 0
@@ -49,7 +51,8 @@ class Model(nn.Module):
             prediction_patch = self._netD_local.forward(patch)
             loss_G_local += self._criterion.compute(prediction_patch, True)
 
-        loss_G += loss_G_local / len(patches_generated_img)
+        loss_G_local /= len(patches_generated_img)
+        loss_G += loss_G_local
 
         # VGG perceptual loss
         vgg_loss = 0
@@ -63,7 +66,7 @@ class Model(nn.Module):
         vgg_loss += vgg_patch_loss / len(patches_generated_img)
 
         loss_G += vgg_loss
-        return loss_G
+        return loss_G, loss_G_global, loss_G_local, vgg_loss
 
     def loss_D(self, net, normal_img, generated_img, hybrid_loss):
         loss_D = 0
@@ -71,15 +74,13 @@ class Model(nn.Module):
         prediction_normal_img = net.forward(normal_img)
         prediction_generated_img = net.forward(generated_img)
         if hybrid_loss:
+            loss_D += self._criterion.compute(prediction_normal_img - torch.mean(prediction_generated_img),
+                                              True) + self._criterion.compute(
+                prediction_generated_img - torch.mean(prediction_normal_img), False)
+        else:
             loss_D += self._criterion.compute(prediction_normal_img, True)
             loss_D += self._criterion.compute(prediction_generated_img, False)
-            loss_D /= 2
-        else:
-            loss_D = self._criterion.compute(prediction_normal_img - torch.mean(prediction_normal_img),
-                                             True) + self._criterion.compute(
-                prediction_generated_img - torch.mean(prediction_normal_img), False)
-            loss_D /= 2
-
+        loss_D /= 2
         return loss_D
 
     def loss_D_local(self, patches_normal_img, patches_generated_img):
@@ -102,3 +103,4 @@ class Model(nn.Module):
             param_group['lr'] = lr
         for param_group in self.optimizer_G.param_groups:
             param_group['lr'] = lr
+        self.lr = lr

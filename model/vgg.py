@@ -39,8 +39,8 @@ class Vgg16(nn.Module):
         self.relu10 = nn.ReLU(inplace=True)
         self.relu11 = nn.ReLU(inplace=True)
 
-    def forward(self, X):
-        h = self.relu1(self.conv1_1(X))
+    def forward(self, x):
+        h = self.relu1(self.conv1_1(x))
         h = self.relu2(self.conv1_2(h))
         h = self.maxpool2d_1(h)
 

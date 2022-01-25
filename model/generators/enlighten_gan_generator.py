@@ -61,6 +61,8 @@ class GeneratorEnlightenGAN(nn.Module):
         self.deconv_13 = nn.Conv2d(128, 64, 3, padding=1)
         self.deconv_12 = nn.Conv2d(64, 32, 3, padding=1)
 
+        self.tanh = nn.Tanh()
+
     def forward(self, input, attention_map):
         gray_2 = self.downsample_1(attention_map)
         gray_3 = self.downsample_2(gray_2)
@@ -100,5 +102,6 @@ class GeneratorEnlightenGAN(nn.Module):
 
         x = x * attention_map
         x = x + input
-        # x = torch.sigmoid(x)
-        return x
+
+        return self.tanh(x)
+        # return x
