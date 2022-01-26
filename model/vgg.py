@@ -55,8 +55,7 @@ class Vgg16(nn.Module):
 
         h = self.relu8(self.conv4_1(h))
         h = self.relu9(self.conv4_2(h))
-        conv4_3 = self.conv4_3(h)
-        h = self.relu10(conv4_3)
+        h = self.relu10(self.conv4_3(h))
 
         relu5_1 = self.relu11(self.conv5_1(h))
         return relu5_1

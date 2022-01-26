@@ -27,8 +27,8 @@ if __name__ == '__main__':
     netD_global.to(device)
     # netD_global = torch.nn.DataParallel(netD_global, device_ids=[0])
 
-    num_patches = 5
-    netD_local = LocalDiscriminatorEnlightenGAN(n=num_patches)
+    num_patches = 6
+    netD_local = LocalDiscriminatorEnlightenGAN()
     netD_local.to(device)
     # netD_local = torch.nn.DataParallel(netD_local, device_ids=[0])
 
@@ -40,6 +40,7 @@ if __name__ == '__main__':
     netVgg.to(device)
     model_dir = './saved_models'
     netVgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')))
+    netVgg.eval()
     # netVgg = torch.nn.DataParallel(netVgg, device_ids=[0])
 
     model = Model(netG, netD_global, netD_local, criterion, netVgg, vgg_loss)
@@ -50,7 +51,6 @@ if __name__ == '__main__':
 
     dataset = ABDataset(dataset_root, attention_map)
     dataset = DataLoader(dataset, batch_size=5, num_workers=1)
-    # dataset = data_loader.load_dataset()
 
     for epoch in range(niter + niter_decay + 1):
         for i, data in enumerate(dataset):
@@ -74,7 +74,7 @@ if __name__ == '__main__':
             model.loss_D_global(img_normal, img_generated.detach()).backward()
 
             model.optimizerD_local.zero_grad()
-            loss_D = model.loss_D_local(patches_normal_img, patches_generated_img).backward()
+            model.loss_D_local(patches_normal_img, patches_generated_img).backward()
 
             model.optimizerD_global.step()
             model.optimizerD_local.step()
