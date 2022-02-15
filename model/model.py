@@ -56,16 +56,16 @@ class Model(nn.Module):
 
         # VGG perceptual loss
         vgg_loss = 0
-
-        vgg_loss += self.vgg_loss.compute(self.vgg, img_generated, img_dark)
-
-        vgg_patch_loss = 0
-        for i in range(len(patches_generated_img)):
-            vgg_patch_loss += self.vgg_loss.compute(self.vgg, patches_generated_img[i], patches_dark_img[i])
-
-        vgg_loss += vgg_patch_loss / len(patches_generated_img)
-
-        loss_G += vgg_loss
+        # 
+        # vgg_loss += self.vgg_loss.compute(self.vgg, img_generated, img_dark)
+        #
+        # vgg_patch_loss = 0
+        # for i in range(len(patches_generated_img)):
+        #     vgg_patch_loss += self.vgg_loss.compute(self.vgg, patches_generated_img[i], patches_dark_img[i])
+        #
+        # vgg_loss += vgg_patch_loss / len(patches_generated_img)
+        #
+        # loss_G += vgg_loss
         return loss_G, loss_G_global, loss_G_local, vgg_loss
 
     def loss_D(self, net, normal_img, generated_img, hybrid_loss):
