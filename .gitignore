@@ -1,5 +1,63 @@
-saved_models/
-checkpoints/
+# Pacharm settings
+.idea/
+build
+*cmake-build*
 
-.idea
-__pycache__
+# Venv
+venv/
+
+# Dataset
+datasets/
+
+# Python chache
+__pycache__/
+.ipynb_checkpoints
+.cache
+
+# Logs folders
+logs
+saved_models/checkpoints/*
+notebooks/runs/*
+lightning_logs*
+tmp
+mlruns
+
+# Audio and video
+*.avi
+*.mp4
+
+# Images
+*.jpg
+*.bmp
+*.png
+*.svg
+*.depth
+*.reg
+*.pdf
+
+# Features
+*.desc
+*.kpt
+*.mathces
+*.overlapping
+
+# Archives
+*.tgz
+*.zip
+*.rar
+*.gz
+*.npz
+*.txt
+!CMakeLists.txt
+*.db
+*.json
+*.log
+
+# Python models
+*.npy
+*.pkl
+*.pt
+*.pth
+*.ckpt
+
+*egg*
