@@ -12,6 +12,8 @@ datasets/
 # Python chache
 __pycache__/
 .ipynb_checkpoints
+#notebooks/.ipynb_checkpoints
+#notebooks/loss/.ipynb_checkpoints
 .cache
 
 # Logs folders
