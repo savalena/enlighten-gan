@@ -25,9 +25,9 @@ class Model(nn.Module):
         self._criterion = criterion
 
         self.lr = lr
+        self.default_lr = lr
 
     def forward(self, input, attention_map):
-        # attention_map = self._attention_map(input)
         output = self._netG.forward(input, attention_map)
         return output
 
@@ -36,15 +36,12 @@ class Model(nn.Module):
         prediction_generated_img = self._netD_global.forward(img_generated)
         prediction_normal_img = self._netD_global.forward(img_normal_light)
 
-        # print(prediction_generated_img[0, 0, :10, :10])
-        # print(prediction_normal_img[0, 0, :10, :10])
-
         # global discriminator loss for generator
         loss_G_global = self._criterion.compute(prediction_normal_img - torch.mean(prediction_generated_img), False) \
                         + self._criterion.compute(prediction_generated_img - torch.mean(prediction_normal_img), True)
         loss_G_global /= 2
         loss_G += loss_G_global
-        # print(loss_G.item())
+
         # local discriminator loss for generator
         loss_G_local = 0
         for patch in patches_generated_img:
@@ -56,16 +53,16 @@ class Model(nn.Module):
 
         # VGG perceptual loss
         vgg_loss = 0
-        # 
-        # vgg_loss += self.vgg_loss.compute(self.vgg, img_generated, img_dark)
-        #
-        # vgg_patch_loss = 0
-        # for i in range(len(patches_generated_img)):
-        #     vgg_patch_loss += self.vgg_loss.compute(self.vgg, patches_generated_img[i], patches_dark_img[i])
-        #
-        # vgg_loss += vgg_patch_loss / len(patches_generated_img)
-        #
-        # loss_G += vgg_loss
+
+        vgg_loss += self.vgg_loss.compute(self.vgg, img_generated, img_dark)
+
+        vgg_patch_loss = 0
+        for i in range(len(patches_generated_img)):
+            vgg_patch_loss += self.vgg_loss.compute(self.vgg, patches_generated_img[i], patches_dark_img[i])
+
+        vgg_loss += vgg_patch_loss / len(patches_generated_img)
+
+        loss_G += vgg_loss
         return loss_G, loss_G_global, loss_G_local, vgg_loss
 
     def loss_D(self, net, normal_img, generated_img, hybrid_loss):
@@ -95,7 +92,7 @@ class Model(nn.Module):
         return D_loss
 
     def update_learning_rate(self, niter):
-        lr_decay = self.lr / niter
+        lr_decay = self.default_lr / niter
         lr = self.lr - lr_decay
         for param_group in self.optimizerD_global.param_groups:
             param_group['lr'] = lr

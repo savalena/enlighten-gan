@@ -32,7 +32,6 @@ class GeneratorEnlightenGAN(nn.Module):
         self.attention_downsample3 = nn.MaxPool2d(2)
         self.attention_downsample4 = nn.MaxPool2d(2)
 
-
         self.conv_11 = double_conv_block(4, 32, 3)
         self.downsample_1 = nn.MaxPool2d(2)
 
@@ -90,19 +89,19 @@ class GeneratorEnlightenGAN(nn.Module):
 
         conv15 = self.conv_15(x)  # 20x20
         x = conv15 * gray_5
-        x = F.upsample(self.conv_21(x), scale_factor=2, mode='bilinear')  # 40x40
+        x = F.upsample(self.conv_21(x), scale_factor=2, mode='bilinear', align_corners=True)  # 40x40
 
         up1 = conv14 * gray_4  # 40x40
         up1 = torch.cat((self.deconv_15(x), up1), 1)  # deconv15 38x38
-        x = F.upsample(self.conv_22(up1), scale_factor=2, mode='bilinear')
+        x = F.upsample(self.conv_22(up1), scale_factor=2, mode='bilinear', align_corners=True)
 
         up2 = conv13 * gray_3
         up2 = torch.cat((self.deconv_14(x), up2), 1)
-        x = F.upsample(self.conv_23(up2), scale_factor=2, mode='bilinear')
+        x = F.upsample(self.conv_23(up2), scale_factor=2, mode='bilinear', align_corners=True)
 
         up3 = conv12 * gray_2
         up3 = torch.cat((self.deconv_13(x), up3), 1)
-        x = F.upsample(self.conv_24(up3), scale_factor=2, mode='bilinear')
+        x = F.upsample(self.conv_24(up3), scale_factor=2, mode='bilinear', align_corners=True)
 
         up4 = conv11 * attention_map
         up4 = torch.cat((self.deconv_12(x), up4), 1)

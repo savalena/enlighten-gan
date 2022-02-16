@@ -1,3 +1,5 @@
+import random
+
 import torch
 from torch.utils.data import Dataset
 import os
@@ -5,7 +7,8 @@ from utils import image_utils, image_tf
 
 
 class ABDataset(Dataset):
-    def __init__(self, dataset_root, attention_map, subroot_dark='dark', subroot_normal='normal', phase='train', random_crop_size=320, train=True):
+    def __init__(self, dataset_root, attention_map, subroot_dark='dark', subroot_normal='normal', phase='train',
+                 random_crop_size=320, train=True):
         self.dataset_root = dataset_root
         self.dataset_subroot_dark = subroot_dark
         self.dataset_subroot_normal = subroot_normal
@@ -28,11 +31,28 @@ class ABDataset(Dataset):
         dark_img = self.transforms(dark_img_raw)
         norm_img = self.transforms(norm_img_raw)
 
+        if random.random() > 0.5:
+            idx = [i for i in range(dark_img.size(2) - 1, -1, -1)]
+            idx = torch.LongTensor(idx)
+            dark_img = dark_img.index_select(2, idx)
+            norm_img = norm_img.index_select(2, idx)
+
+        if random.random() > 0.5:
+            idx = [i for i in range(dark_img.size(1) - 1, -1, -1)]
+            idx = torch.LongTensor(idx)
+            dark_img = dark_img.index_select(1, idx)
+            norm_img = norm_img.index_select(1, idx)
+
+        if random.random() > 0.5:
+            times = random.randint(200, 400) / 100.
+            input_img = (dark_img + 1) / 2. / times
+            input_img = input_img * 2 - 1
+        else:
+            input_img = dark_img
+
         gray = self.attention_map(dark_img)
 
-        return {'dark': dark_img, 'normal': norm_img, "gray": gray}
+        return {'dark': dark_img, 'input': input_img, 'normal': norm_img, "gray": gray}
 
     def __len__(self):
         return len(self.dark_imgs_filenames)
-
-
